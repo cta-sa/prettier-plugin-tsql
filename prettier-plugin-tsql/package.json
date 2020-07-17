@@ -1,0 +1,14 @@
+{
+  "name": "prettier-plugin-tsql",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.js",
+  "scripts": {
+    "print": "prettier --plugin=. test.sql"
+  },
+  "author": "João Pedro Hickmann",
+  "license": "MIT",
+  "dependencies": {
+    "prettier": "^2.0.5"
+  }
+}
