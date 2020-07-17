@@ -51,7 +51,6 @@ namespace SQLFormat
                 return;
             }
 
-            SortOrder
 
             var settings = new JsonSerializerSettings
             {

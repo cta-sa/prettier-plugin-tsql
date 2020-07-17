@@ -1,14 +1,11 @@
 const {
   concat,
   hardline,
+  fill,
   indent,
-  cursor,
   align,
   group,
   softline,
-  markAsRoot,
-  literalline,
-  dedentToRoot,
   join,
   line,
 } = require("prettier/doc").builders;
@@ -73,11 +70,13 @@ const nodes = {
     if (path.getValue().OrderByClause)
       after.push(hardline, path.call(printer, "OrderByClause"));
 
-    return concat([
-      "SELECT ",
-      align(7, join(concat([",", line]), path.map(printer, "SelectElements"))),
-      concat(after),
-    ]);
+    const elements = path
+      .map(printer, "SelectElements")
+      .map((a) => concat([line, a, ","]));
+
+    if (elements.length > 0) elements[elements.length - 1].parts.pop();
+
+    return concat(["SELECT", align(7, fill(elements)), concat(after)]);
   },
   FromClause: (path, opts, print) => {
     return concat([
@@ -101,7 +100,7 @@ const nodes = {
         type = "";
         break;
       case 1:
-        type = ""; // ASC IS NOT NECESSARY
+        type = "ASC";
         break;
       case 2:
         type = " DESC";
@@ -361,12 +360,14 @@ const nodes = {
         group(concat(["ELSE ", align(5, path.call(printer, "ElseExpression"))]))
       );
 
-    return concat([
-      "CASE",
-      indent(concat([hardline, join(hardline, expressions)])),
-      hardline,
-      "END",
-    ]);
+    return group(
+      concat([
+        "CASE",
+        indent(concat([hardline, join(hardline, expressions)])),
+        hardline,
+        "END",
+      ])
+    );
   },
   SimpleCaseExpression: (path, opts, print) => {
     const expressions = path.map(printer, "WhenClauses");
@@ -376,13 +377,14 @@ const nodes = {
         group(concat(["ELSE ", align(5, path.call(printer, "ElseExpression"))]))
       );
 
-    return concat([
-      "CASE ",
-      path.call(printer, "InputExpression"),
-      indent(concat([hardline, join(hardline, expressions)])),
-      hardline,
-      "END",
-    ]);
+    return group(
+      concat([
+        "CASE",
+        indent(concat([hardline, join(hardline, expressions)])),
+        hardline,
+        "END",
+      ])
+    );
   },
   SearchedWhenClause: (path, opts, print) => {
     return group(
@@ -390,7 +392,11 @@ const nodes = {
         "WHEN ",
         align(5, path.call(printer, "WhenExpression")),
         indent(
-          concat([softline, " THEN ", path.call(printer, "ThenExpression")])
+          concat([
+            line,
+            "THEN ",
+            align(5, path.call(printer, "ThenExpression")),
+          ])
         ),
       ])
     );
@@ -401,7 +407,11 @@ const nodes = {
         "WHEN ",
         align(5, path.call(printer, "WhenExpression")),
         indent(
-          concat([softline, " THEN ", path.call(printer, "ThenExpression")])
+          concat([
+            line,
+            "THEN ",
+            align(5, path.call(printer, "ThenExpression")),
+          ])
         ),
       ])
     );
@@ -512,6 +522,18 @@ const nodes = {
         path.getValue().Qualifier ? [path.call(printer, "Qualifier"), "."] : []
       ),
       "*",
+    ]);
+  },
+  ParenthesisExpression: (path, opts, print) => {
+    return concat(["(", path.call(printer, "Expression"), ")"]);
+  },
+  QueryDerivedTable: (path, opts, print) => {
+    return concat([
+      "(",
+      indent(concat([hardline, path.call(printer, "QueryExpression")])),
+      hardline,
+      ")",
+      concat(path.getValue().Alias ? [" ", path.call(printer, "Alias")] : []),
     ]);
   },
 };

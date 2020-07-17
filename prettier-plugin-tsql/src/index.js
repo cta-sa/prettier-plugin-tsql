@@ -28,7 +28,7 @@ module.exports = {
   },
   options: {},
   defaultOptions: {
-    printWidth: 178,
+    printWidth: 80,
     tabWidth: 2,
   },
 };
