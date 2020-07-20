@@ -3,6 +3,7 @@ const {
   hardline,
   fill,
   indent,
+  ifBreak,
   align,
   group,
   softline,
@@ -81,7 +82,7 @@ const nodes = {
   FromClause: (path, opts, print) => {
     return concat([
       "FROM ",
-      align(5, join(concat([",", line]), path.map(printer, "TableReferences"))),
+      indent(join(concat([",", line]), path.map(printer, "TableReferences"))),
     ]);
   },
   WhereClause: (path, opts, print) => {
@@ -345,6 +346,7 @@ const nodes = {
             join(concat([",", line]), path.map(printer, "Parameters")),
           ])
         ),
+        softline,
         ")",
       ])
     );
@@ -379,7 +381,8 @@ const nodes = {
 
     return group(
       concat([
-        "CASE",
+        "CASE ",
+        align(5, path.call(printer, "InputExpression")),
         indent(concat([hardline, join(hardline, expressions)])),
         hardline,
         "END",
@@ -483,38 +486,41 @@ const nodes = {
     let type = "";
     switch (path.getValue().BinaryExpressionType) {
       case 0:
-        type = " + ";
+        type = "+ ";
         break;
       case 1:
-        type = " - ";
+        type = "- ";
         break;
       case 2:
-        type = " * ";
+        type = "* ";
         break;
       case 3:
-        type = " / ";
+        type = "/ ";
         break;
       case 4:
-        type = " % ";
+        type = "% ";
         break;
       case 5:
-        type = " & ";
+        type = "& ";
         break;
       case 6:
-        type = " | ";
+        type = "| ";
         break;
       case 7:
-        type = " ^ ";
+        type = "^ ";
         break;
       default:
         throw new Error("default");
     }
 
-    return concat([
-      path.call(printer, "FirstExpression"),
-      type,
-      path.call(printer, "SecondExpression"),
-    ]);
+    return group(
+      concat([
+        path.call(printer, "FirstExpression"),
+        line,
+        type,
+        path.call(printer, "SecondExpression"),
+      ])
+    );
   },
   SelectStarExpression: (path, opts, print) => {
     return concat([
@@ -525,7 +531,17 @@ const nodes = {
     ]);
   },
   ParenthesisExpression: (path, opts, print) => {
-    return concat(["(", path.call(printer, "Expression"), ")"]);
+    return group(
+      concat([
+        "(",
+        ifBreak(
+          indent(concat([softline, path.call(printer, "Expression")])),
+          align(1, path.call(printer, "Expression"))
+        ),
+        softline,
+        ")",
+      ])
+    );
   },
   QueryDerivedTable: (path, opts, print) => {
     return concat([
